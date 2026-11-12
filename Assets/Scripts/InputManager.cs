@@ -18,7 +18,10 @@ public class InputManager : MonoBehaviour
 
     private void Update()
     {
-        motor.ProcessMove(onFoot.Movement.ReadValue<Vector2>());
+        motor.ProcessMove(
+            onFoot.Movement.ReadValue<Vector2>(),
+            onFoot.Sprint.IsPressed(),
+            onFoot.Crouch.IsPressed());
     }
 
     private void LateUpdate()
