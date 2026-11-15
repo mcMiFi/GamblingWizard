@@ -537,8 +537,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMotor
   playerSpeed: 5
+  sprintSpeed: 8
+  crouchSpeed: 2.5
   gravity: -9.81
-  jumpHeight: 3
+  jumpHeight: 1.25
+  crouchHeight: 1
+  crouchTransitionSpeed: 8
 --- !u!114 &1871923577
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -566,6 +570,25 @@ MonoBehaviour:
   camera: {fileID: 5039060762850540298}
   XSensitivity: 30
   YSensitivity: 30
+--- !u!114 &1871923579
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1871923570}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d52f6de7cf34db2a1bfef4c9f9246bd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  deckSize: 20
+  maxRightHandSize: 4
+  cardSize: {x: 150, y: 210}
+  fanAngle: 18
+  handBottomOffset: 45
+  showControls: 1
+  showLeftHand: 1
 --- !u!1 &2053687449
 GameObject:
   m_ObjectHideFlags: 0
@@ -743,6 +766,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 3005541249665372928, guid: 112a98b3c8b6a804583978692cbcbbe0, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1871923578}
+    - targetCorrespondingSourceObject: {fileID: 3005541249665372928, guid: 112a98b3c8b6a804583978692cbcbbe0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1871923579}
   m_SourcePrefab: {fileID: 100100000, guid: 112a98b3c8b6a804583978692cbcbbe0, type: 3}
 --- !u!20 &5039060762850540298 stripped
 Camera:
