@@ -103,14 +103,15 @@ public sealed class CardHandController : MonoBehaviour
     private void Update()
     {
         Mouse mouse = Mouse.current;
-        if (mouse == null)
-            return;
+        if (mouse != null && mouse.leftButton.wasPressedThisFrame)
+            UtilizeAllCards();
 
-        if (mouse.rightButton.wasPressedThisFrame)
+        if (mouse != null && mouse.rightButton.wasPressedThisFrame)
             DraftCard();
 
-        if (mouse.leftButton.wasPressedThisFrame)
-            UtilizeCard();
+        Keyboard keyboard = Keyboard.current;
+        if (keyboard != null && keyboard.rKey.wasPressedThisFrame)
+            RefillDeck();
     }
 
     public bool DraftCard()
@@ -150,11 +151,36 @@ public sealed class CardHandController : MonoBehaviour
         return true;
     }
 
+    public int UtilizeAllCards()
+    {
+        if (rightHand.Count == 0)
+        {
+            statusMessage = "There are no cards in the right hand";
+            return 0;
+        }
+
+        int utilizedCount = 0;
+        while (rightHand.Count > 0)
+        {
+            UtilizeCard();
+            utilizedCount++;
+        }
+
+        statusMessage = $"Utilized all {utilizedCount} cards in the right hand";
+        return utilizedCount;
+    }
+
     public void ResetDeck()
     {
         deck = new CardDeck(Mathf.Max(1, deckSize));
         rightHand.Clear();
-        statusMessage = "Right click to draft a card";
+        statusMessage = "R refills the deck";
+    }
+
+    public void RefillDeck()
+    {
+        deck = new CardDeck(Mathf.Max(1, deckSize));
+        statusMessage = "Deck refilled";
     }
 
     private void OnGUI()
@@ -168,7 +194,7 @@ public sealed class CardHandController : MonoBehaviour
         {
             GUI.Label(
                 new Rect(24f, 24f, 420f, 32f),
-                "RMB  Draft card     LMB  Utilize card",
+                "LMB  Utilize all right-hand cards     RMB  Draft card     R  Refill deck",
                 labelStyle);
         }
 
