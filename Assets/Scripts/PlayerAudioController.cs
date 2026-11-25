@@ -8,6 +8,10 @@ public sealed class PlayerAudioController : MonoBehaviour
     [SerializeField] private AudioClip backgroundMusic;
     [SerializeField] [Range(0f, 1f)] private float musicVolume = 0.3f;
 
+    [Header("Jump")]
+    [SerializeField] private AudioClip jumpClip;
+    [SerializeField] [Range(0f, 1f)] private float jumpVolume = 0.65f;
+
     [Header("Footsteps")]
     [SerializeField] private AudioClip[] footstepClips;
     [SerializeField] [Range(0f, 1f)] private float footstepVolume = 0.55f;
@@ -35,6 +39,9 @@ public sealed class PlayerAudioController : MonoBehaviour
         else
             musicSource.Play();
 
+        if (jumpClip == null)
+            Debug.LogError("PlayerAudioController requires a jump sound clip.", this);
+
         footstepsConfigured = footstepClips != null && footstepClips.Length > 0;
         if (footstepsConfigured)
         {
@@ -50,6 +57,12 @@ public sealed class PlayerAudioController : MonoBehaviour
 
         if (!footstepsConfigured)
             Debug.LogError("PlayerAudioController requires a non-empty array of valid footstep clips.", this);
+    }
+
+    public void PlayJump()
+    {
+        if (jumpClip != null)
+            footstepSource.PlayOneShot(jumpClip, jumpVolume);
     }
 
     public void ProcessMovementAudio(

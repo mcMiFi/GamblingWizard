@@ -73,7 +73,10 @@ public class PlayerMotor : MonoBehaviour
     public void Jump()
     {
         if (controller.isGrounded && controller.height >= StandingHeight)
+        {
             playerVelocity.y = Mathf.Sqrt(jumpHeight * -3.0f * gravity);
+            playerAudio?.PlayJump();
+        }
     }
 
     private void UpdateCrouch(bool crouching)
