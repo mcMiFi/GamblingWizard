@@ -75,22 +75,17 @@ public sealed class CardHandController : MonoBehaviour
     [SerializeField] [Range(0f, 30f)] private float fanAngle = 18f;
     [SerializeField] private float handBottomOffset = 45f;
 
-    [Header("Prototype visuals")]
-    [SerializeField] private bool showControls = true;
-    [SerializeField] private bool showLeftHand = true;
-
     private readonly List<CardData> rightHand = new List<CardData>();
     private CardDeck deck;
     private GUIStyle cardStyle;
     private GUIStyle labelStyle;
     private GUIStyle smallLabelStyle;
-    private GUIStyle panelStyle;
     private Texture2D whiteTexture;
-    private string statusMessage;
 
     public IReadOnlyList<CardData> RightHand => rightHand;
     public int RemainingCards => deck == null ? 0 : deck.RemainingCount;
     public int MaxRightHandSize => maxRightHandSize;
+    public int DeckSize => deckSize;
 
     public event Action<CardData> CardDrafted;
     public event Action<CardData> CardUtilized;
@@ -117,20 +112,13 @@ public sealed class CardHandController : MonoBehaviour
     public bool DraftCard()
     {
         if (rightHand.Count >= maxRightHandSize)
-        {
-            statusMessage = $"Right hand full ({maxRightHandSize}/{maxRightHandSize})";
             return false;
-        }
 
         CardData card = deck.Draw();
         if (card == null)
-        {
-            statusMessage = "The deck is empty";
             return false;
-        }
 
         rightHand.Add(card);
-        statusMessage = $"Drafted {card.DisplayName}";
         CardDrafted?.Invoke(card);
         return true;
     }
@@ -138,15 +126,11 @@ public sealed class CardHandController : MonoBehaviour
     public bool UtilizeCard()
     {
         if (rightHand.Count == 0)
-        {
-            statusMessage = "There are no cards in the right hand";
             return false;
-        }
 
         int lastIndex = rightHand.Count - 1;
         CardData card = rightHand[lastIndex];
         rightHand.RemoveAt(lastIndex);
-        statusMessage = $"Utilized {card.DisplayName} (spell logic not added yet)";
         CardUtilized?.Invoke(card);
         return true;
     }
@@ -154,10 +138,7 @@ public sealed class CardHandController : MonoBehaviour
     public int UtilizeAllCards()
     {
         if (rightHand.Count == 0)
-        {
-            statusMessage = "There are no cards in the right hand";
             return 0;
-        }
 
         int utilizedCount = 0;
         while (rightHand.Count > 0)
@@ -166,7 +147,6 @@ public sealed class CardHandController : MonoBehaviour
             utilizedCount++;
         }
 
-        statusMessage = $"Utilized all {utilizedCount} cards in the right hand";
         return utilizedCount;
     }
 
@@ -174,91 +154,28 @@ public sealed class CardHandController : MonoBehaviour
     {
         deck = new CardDeck(Mathf.Max(1, deckSize));
         rightHand.Clear();
-        statusMessage = "R refills the deck";
     }
 
     public void RefillDeck()
     {
         deck = new CardDeck(Mathf.Max(1, deckSize));
-        statusMessage = "Deck refilled";
     }
 
     private void OnGUI()
     {
-        EnsureStyles();
-
-        DrawDeckCounter();
-        DrawHands();
-
-        if (showControls)
-        {
-            GUI.Label(
-                new Rect(24f, 24f, 420f, 32f),
-                "LMB  Utilize all right-hand cards     RMB  Draft card     R  Refill deck",
-                labelStyle);
-        }
-
-        GUI.Label(
-            new Rect(24f, 58f, 620f, 30f),
-            statusMessage,
-            smallLabelStyle);
+        float scale = Mathf.Min(Screen.width / 960f, Screen.height / 540f);
+        EnsureStyles(scale);
+        DrawRightHandCards(Screen.height - handBottomOffset * scale, scale);
     }
 
-    private void DrawDeckCounter()
-    {
-        Rect counterRect = new Rect(Screen.width - 250f, 24f, 226f, 76f);
-        GUI.Box(counterRect, GUIContent.none, panelStyle);
-        GUI.Label(
-            new Rect(counterRect.x + 14f, counterRect.y + 10f, 200f, 28f),
-            $"DECK  {RemainingCards}/{deckSize}",
-            labelStyle);
-        GUI.Label(
-            new Rect(counterRect.x + 14f, counterRect.y + 40f, 200f, 22f),
-            $"RIGHT HAND  {rightHand.Count}/{maxRightHandSize}",
-            smallLabelStyle);
-    }
-
-    private void DrawHands()
-    {
-        float bottom = Screen.height - handBottomOffset;
-        Rect leftHandRect = new Rect(28f, bottom - 145f, 210f, 120f);
-        Rect rightHandRect = new Rect(Screen.width - 300f, bottom - 145f, 270f, 120f);
-
-        if (showLeftHand)
-        {
-            GUI.Box(leftHandRect, GUIContent.none, panelStyle);
-            GUI.Label(
-                new Rect(leftHandRect.x + 16f, leftHandRect.y + 14f, leftHandRect.width - 32f, 25f),
-                "LEFT HAND",
-                smallLabelStyle);
-            GUI.Label(
-                new Rect(leftHandRect.x + 16f, leftHandRect.y + 48f, leftHandRect.width - 32f, 48f),
-                "EMPTY",
-                labelStyle);
-        }
-
-        GUI.Box(rightHandRect, GUIContent.none, panelStyle);
-        GUI.Label(
-            new Rect(rightHandRect.x + 16f, rightHandRect.y + 14f, rightHandRect.width - 32f, 25f),
-            "RIGHT HAND",
-            smallLabelStyle);
-
-        DrawRightHandCards(bottom);
-    }
-
-    private void DrawRightHandCards(float bottom)
+    private void DrawRightHandCards(float bottom, float scale)
     {
         if (rightHand.Count == 0)
-        {
-            GUI.Label(
-                new Rect(Screen.width - 284f, bottom - 96f, 238f, 42f),
-                "EMPTY - draft a card",
-                smallLabelStyle);
             return;
-        }
 
         float centerX = Screen.width * 0.5f;
-        float spacing = Mathf.Min(cardSize.x * 0.72f, 170f);
+        Vector2 scaledCardSize = cardSize * scale;
+        float spacing = Mathf.Min(scaledCardSize.x * 0.72f, 170f * scale);
         float startX = centerX - spacing * (rightHand.Count - 1) * 0.5f;
 
         for (int i = 0; i < rightHand.Count; i++)
@@ -268,19 +185,19 @@ public sealed class CardHandController : MonoBehaviour
                 : (i / (float)(rightHand.Count - 1) - 0.5f) * 2f;
             float angle = normalized * fanAngle;
             Rect cardRect = new Rect(
-                startX + i * spacing - cardSize.x * 0.5f,
-                bottom - cardSize.y,
-                cardSize.x,
-                cardSize.y);
+                startX + i * spacing - scaledCardSize.x * 0.5f,
+                bottom - scaledCardSize.y,
+                scaledCardSize.x,
+                scaledCardSize.y);
 
             Matrix4x4 previousMatrix = GUI.matrix;
             GUIUtility.RotateAroundPivot(-angle, new Vector2(cardRect.center.x, cardRect.yMax));
-            DrawCard(cardRect, rightHand[i], i + 1);
+            DrawCard(cardRect, rightHand[i], i + 1, scale);
             GUI.matrix = previousMatrix;
         }
     }
 
-    private void DrawCard(Rect cardRect, CardData card, int index)
+    private void DrawCard(Rect cardRect, CardData card, int index, float scale)
     {
         Color previousColor = GUI.color;
         GUI.color = card.Color;
@@ -288,28 +205,28 @@ public sealed class CardHandController : MonoBehaviour
         GUI.color = Color.white;
 
         Rect innerRect = new Rect(
-            cardRect.x + 8f,
-            cardRect.y + 8f,
-            cardRect.width - 16f,
-            cardRect.height - 16f);
+            cardRect.x + 8f * scale,
+            cardRect.y + 8f * scale,
+            cardRect.width - 16f * scale,
+            cardRect.height - 16f * scale);
         GUI.Box(innerRect, GUIContent.none, cardStyle);
         GUI.Label(
-            new Rect(cardRect.x + 18f, cardRect.y + 22f, cardRect.width - 36f, 28f),
+            new Rect(cardRect.x + 18f * scale, cardRect.y + 22f * scale, cardRect.width - 36f * scale, 28f * scale),
             $"CARD {index}",
             smallLabelStyle);
         GUI.Label(
-            new Rect(cardRect.x + 18f, cardRect.y + 72f, cardRect.width - 36f, 70f),
+            new Rect(cardRect.x + 18f * scale, cardRect.y + 72f * scale, cardRect.width - 36f * scale, 70f * scale),
             card.DisplayName,
             labelStyle);
         GUI.Label(
-            new Rect(cardRect.x + 18f, cardRect.yMax - 38f, cardRect.width - 36f, 24f),
+            new Rect(cardRect.x + 18f * scale, cardRect.yMax - 38f * scale, cardRect.width - 36f * scale, 24f * scale),
             "READY",
             smallLabelStyle);
 
         GUI.color = previousColor;
     }
 
-    private void EnsureStyles()
+    private void EnsureStyles(float scale)
     {
         if (whiteTexture == null)
         {
@@ -318,38 +235,27 @@ public sealed class CardHandController : MonoBehaviour
             whiteTexture.Apply();
         }
 
-        if (cardStyle != null)
-            return;
+        if (cardStyle == null)
+        {
+            cardStyle = new GUIStyle(GUI.skin.box)
+            {
+                normal = { background = whiteTexture },
+                border = new RectOffset(3, 3, 3, 3)
+            };
+            labelStyle = new GUIStyle(GUI.skin.label)
+            {
+                fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.MiddleCenter,
+                normal = { textColor = Color.white }
+            };
+            smallLabelStyle = new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                normal = { textColor = Color.white }
+            };
+        }
 
-        cardStyle = new GUIStyle(GUI.skin.box)
-        {
-            normal = { background = whiteTexture },
-            border = new RectOffset(3, 3, 3, 3)
-        };
-        labelStyle = new GUIStyle(GUI.skin.label)
-        {
-            fontSize = 20,
-            fontStyle = FontStyle.Bold,
-            alignment = TextAnchor.MiddleCenter,
-            normal = { textColor = Color.white }
-        };
-        smallLabelStyle = new GUIStyle(GUI.skin.label)
-        {
-            fontSize = 14,
-            alignment = TextAnchor.MiddleCenter,
-            normal = { textColor = Color.white }
-        };
-        panelStyle = new GUIStyle(GUI.skin.box)
-        {
-            normal = { background = MakePanelTexture() }
-        };
-    }
-
-    private Texture2D MakePanelTexture()
-    {
-        Texture2D texture = new Texture2D(1, 1);
-        texture.SetPixel(0, 0, new Color(0.03f, 0.02f, 0.07f, 0.82f));
-        texture.Apply();
-        return texture;
+        labelStyle.fontSize = Mathf.Max(12, Mathf.RoundToInt(20f * scale));
+        smallLabelStyle.fontSize = Mathf.Max(10, Mathf.RoundToInt(14f * scale));
     }
 }

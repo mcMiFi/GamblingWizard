@@ -587,8 +587,41 @@ MonoBehaviour:
   cardSize: {x: 150, y: 210}
   fanAngle: 18
   handBottomOffset: 45
-  showControls: 1
-  showLeftHand: 1
+--- !u!114 &1871923580
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1871923570}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f4945a523394589a63259c4f39eb610, type: 3}
+  m_Name: ""
+  m_EditorClassIdentifier: ""
+  maxHealth: 100
+  startingHealth: 100
+--- !u!114 &1871923581
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1871923570}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49a4d8165db44246968d45f236c71f10, type: 3}
+  m_Name: ""
+  m_EditorClassIdentifier: ""
+  fullCrosshair: {fileID: 2800000, guid: 44f7c185a840c8c48a52ee54f05a630e, type: 3}
+  crosshairOverride: {fileID: 0}
+  deckIcon: {fileID: 2800000, guid: 8da22a712a7791e4d85408f8799cdb56, type: 3}
+  healthBarFrame: {fileID: 2800000, guid: 54263a9d15cf29c42882b23c1c597293, type: 3}
+  healthBarBackground: {fileID: 2800000, guid: 7387bf4b87f691d4d82093a8ee00f98f, type: 3}
+  healthBarFill: {fileID: 2800000, guid: 0ac259bc1ece61a49942eac836bd4ce8, type: 3}
+  healthBarFillLow: {fileID: 2800000, guid: bd95c34c39fbbc54c8c154cf4337903b, type: 3}
+  crosshairSize: 24
+  lowHealthThreshold: 0.25
 --- !u!1 &2053687449
 GameObject:
   m_ObjectHideFlags: 0
@@ -769,6 +802,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 3005541249665372928, guid: 112a98b3c8b6a804583978692cbcbbe0, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1871923579}
+    - targetCorrespondingSourceObject: {fileID: 3005541249665372928, guid: 112a98b3c8b6a804583978692cbcbbe0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1871923580}
+    - targetCorrespondingSourceObject: {fileID: 3005541249665372928, guid: 112a98b3c8b6a804583978692cbcbbe0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1871923581}
   m_SourcePrefab: {fileID: 100100000, guid: 112a98b3c8b6a804583978692cbcbbe0, type: 3}
 --- !u!20 &5039060762850540298 stripped
 Camera:

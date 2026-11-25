@@ -16,11 +16,13 @@ public class PlayerMotor : MonoBehaviour
     private const float StandingCameraHeight = 0.6f;
     private const float CrouchingCameraHeight = 0.1f;
     private Transform cameraTransform;
+    private PlayerAudioController playerAudio;
 
     private void Start()
     {
         controller = GetComponent<CharacterController>();
         cameraTransform = GetComponentInChildren<Camera>()?.transform;
+        playerAudio = GetComponent<PlayerAudioController>();
     }
 
     public void ProcessMove(Vector2 input, bool sprinting, bool crouching)
@@ -30,6 +32,7 @@ public class PlayerMotor : MonoBehaviour
 
         Vector3 moveDirection = new Vector3(input.x, 0.0f, input.y);
         moveDirection = Vector3.ClampMagnitude(moveDirection, 1.0f);
+        Vector3 positionBeforeMove = transform.position;
         float speed = controller.height < StandingHeight
             ? crouchSpeed
             : sprinting && moveDirection.sqrMagnitude > 0.0f ? sprintSpeed : playerSpeed;
@@ -41,6 +44,17 @@ public class PlayerMotor : MonoBehaviour
             playerVelocity.y += gravity * Time.deltaTime;
 
         controller.Move(playerVelocity * Time.deltaTime);
+
+        Vector3 actualMovement = transform.position - positionBeforeMove;
+        actualMovement.y = 0f;
+        bool isMoving = moveDirection.sqrMagnitude > 0f && actualMovement.sqrMagnitude > 0.000001f;
+        bool isSprinting = sprinting && controller.height >= StandingHeight &&
+            moveDirection.sqrMagnitude > 0f;
+        playerAudio?.ProcessMovementAudio(
+            isMoving,
+            controller.isGrounded,
+            isSprinting,
+            controller.height < StandingHeight);
 
         if (cameraTransform != null)
         {

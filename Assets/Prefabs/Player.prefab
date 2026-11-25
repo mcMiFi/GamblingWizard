@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 6234447914761925147}
   - component: {fileID: 7881815789658732713}
   - component: {fileID: 611553801094613007}
+  - component: {fileID: 7482910365548219013}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -117,6 +118,27 @@ CharacterController:
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &7482910365548219013
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3005541249665372928}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d41a6b93c4e84d59a70f1b6c2e83a145, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerAudioController
+  backgroundMusic: {fileID: 8300000, guid: 8e9328617ba7c9944ae79ebfc532ab76, type: 3}
+  musicVolume: 0.3
+  footstepClips:
+  - {fileID: 8300000, guid: ee01634aada259446bab2ca07bef066c, type: 3}
+  - {fileID: 8300000, guid: 17f0cf18ea964f2469b7d7f01ee860b9, type: 3}
+  footstepVolume: 0.55
+  walkingStepInterval: 0.48
+  sprintingStepInterval: 0.34
+  crouchingStepInterval: 0.62
 --- !u!1 &4676792054697303069
 GameObject:
   m_ObjectHideFlags: 0
