@@ -3,51 +3,27 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-[Serializable]
-public sealed class CardData
-{
-    [SerializeField] private string id;
-    [SerializeField] private string displayName;
-    [SerializeField] private Color color;
-
-    public string Id => id;
-    public string DisplayName => displayName;
-    public Color Color => color;
-
-    public CardData(string id, string displayName, Color color)
-    {
-        this.id = id;
-        this.displayName = displayName;
-        this.color = color;
-    }
-}
-
 public sealed class CardDeck
 {
-    private readonly List<CardData> cards = new List<CardData>();
+    private readonly List<CardDefinition> cards = new List<CardDefinition>();
 
     public int RemainingCount => cards.Count;
 
-    public CardDeck(int size)
+    public CardDeck(IReadOnlyList<CardDefinition> cardDefinitions, int size)
     {
         for (int i = 0; i < size; i++)
-        {
-            cards.Add(new CardData(
-                $"card_{i + 1}",
-                $"Spell {i + 1}",
-                Color.HSVToRGB(Mathf.Repeat(i * 0.13f, 1f), 0.55f, 0.95f)));
-        }
+            cards.Add(cardDefinitions[i % cardDefinitions.Count]);
 
         Shuffle();
     }
 
-    public CardData Draw()
+    public CardDefinition Draw()
     {
         if (cards.Count == 0)
             return null;
 
         int lastIndex = cards.Count - 1;
-        CardData card = cards[lastIndex];
+        CardDefinition card = cards[lastIndex];
         cards.RemoveAt(lastIndex);
         return card;
     }
@@ -57,7 +33,7 @@ public sealed class CardDeck
         for (int i = cards.Count - 1; i > 0; i--)
         {
             int swapIndex = UnityEngine.Random.Range(0, i + 1);
-            CardData card = cards[i];
+            CardDefinition card = cards[i];
             cards[i] = cards[swapIndex];
             cards[swapIndex] = card;
         }
@@ -69,29 +45,33 @@ public sealed class CardHandController : MonoBehaviour
     [Header("Rules")]
     [Min(1)] [SerializeField] private int deckSize = 20;
     [Min(1)] [SerializeField] private int maxRightHandSize = 4;
+    [SerializeField] private CardDatabase cardDatabase;
 
     [Header("Card layout")]
     [SerializeField] private Vector2 cardSize = new Vector2(150f, 210f);
     [SerializeField] [Range(0f, 30f)] private float fanAngle = 18f;
     [SerializeField] private float handBottomOffset = 45f;
 
-    private readonly List<CardData> rightHand = new List<CardData>();
+    private readonly List<CardDefinition> rightHand = new List<CardDefinition>();
     private CardDeck deck;
     private GUIStyle cardStyle;
     private GUIStyle labelStyle;
     private GUIStyle smallLabelStyle;
     private Texture2D whiteTexture;
 
-    public IReadOnlyList<CardData> RightHand => rightHand;
+    public IReadOnlyList<CardDefinition> RightHand => rightHand;
     public int RemainingCards => deck == null ? 0 : deck.RemainingCount;
     public int MaxRightHandSize => maxRightHandSize;
     public int DeckSize => deckSize;
 
-    public event Action<CardData> CardDrafted;
-    public event Action<CardData> CardUtilized;
+    public event Action<CardDefinition> CardDrafted;
+    public event Action<CardDefinition> CardUtilized;
 
     private void Awake()
     {
+        if (!HasValidCardDatabase())
+            return;
+
         ResetDeck();
     }
 
@@ -99,7 +79,7 @@ public sealed class CardHandController : MonoBehaviour
     {
         Mouse mouse = Mouse.current;
         if (mouse != null && mouse.leftButton.wasPressedThisFrame)
-            UtilizeAllCards();
+            UtilizeCard();
 
         if (mouse != null && mouse.rightButton.wasPressedThisFrame)
             DraftCard();
@@ -114,7 +94,10 @@ public sealed class CardHandController : MonoBehaviour
         if (rightHand.Count >= maxRightHandSize)
             return false;
 
-        CardData card = deck.Draw();
+        if (deck == null)
+            return false;
+
+        CardDefinition card = deck.Draw();
         if (card == null)
             return false;
 
@@ -129,7 +112,7 @@ public sealed class CardHandController : MonoBehaviour
             return false;
 
         int lastIndex = rightHand.Count - 1;
-        CardData card = rightHand[lastIndex];
+        CardDefinition card = rightHand[lastIndex];
         rightHand.RemoveAt(lastIndex);
         CardUtilized?.Invoke(card);
         return true;
@@ -152,13 +135,39 @@ public sealed class CardHandController : MonoBehaviour
 
     public void ResetDeck()
     {
-        deck = new CardDeck(Mathf.Max(1, deckSize));
+        if (!HasValidCardDatabase())
+            return;
+
+        deck = new CardDeck(cardDatabase.Cards, Mathf.Max(1, deckSize));
         rightHand.Clear();
     }
 
     public void RefillDeck()
     {
-        deck = new CardDeck(Mathf.Max(1, deckSize));
+        if (!HasValidCardDatabase())
+            return;
+
+        deck = new CardDeck(cardDatabase.Cards, Mathf.Max(1, deckSize));
+    }
+
+    private bool HasValidCardDatabase()
+    {
+        if (cardDatabase == null || cardDatabase.Cards == null || cardDatabase.Cards.Count == 0)
+        {
+            Debug.LogError("CardHandController requires a CardDatabase with at least one card.", this);
+            return false;
+        }
+
+        for (int i = 0; i < cardDatabase.Cards.Count; i++)
+        {
+            if (cardDatabase.Cards[i] == null)
+            {
+                Debug.LogError($"CardDatabase contains a missing card definition at index {i}.", this);
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private void OnGUI()
@@ -197,7 +206,7 @@ public sealed class CardHandController : MonoBehaviour
         }
     }
 
-    private void DrawCard(Rect cardRect, CardData card, int index, float scale)
+    private void DrawCard(Rect cardRect, CardDefinition card, int index, float scale)
     {
         Color previousColor = GUI.color;
         GUI.color = card.Color;
@@ -220,7 +229,7 @@ public sealed class CardHandController : MonoBehaviour
             labelStyle);
         GUI.Label(
             new Rect(cardRect.x + 18f * scale, cardRect.yMax - 38f * scale, cardRect.width - 36f * scale, 24f * scale),
-            "READY",
+            $"{card.Damage:0} DAMAGE",
             smallLabelStyle);
 
         GUI.color = previousColor;

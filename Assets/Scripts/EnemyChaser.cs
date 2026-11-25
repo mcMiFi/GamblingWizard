@@ -2,6 +2,7 @@ using UnityEngine;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(CharacterController))]
+[RequireComponent(typeof(EnemyHealth))]
 public sealed class EnemyChaser : MonoBehaviour
 {
     [SerializeField] private PlayerHealth target;
