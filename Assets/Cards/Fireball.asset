@@ -15,8 +15,18 @@ MonoBehaviour:
   id: fireball
   displayName: FIREBALL
   description: Launch a fireball that damages the enemy.
+  spellType: 0
+  category: 0
   color: {r: 1, g: 0.22, b: 0.025, a: 1}
   damage: 25
+  healingAmount: 15
   projectileSpeed: 18
   projectileRadius: 0.22
   projectileLifetime: 5
+  maxChainTargets: 4
+  chainRange: 4
+  chainDelay: 0.2
+  chainVfxDuration: 0.25
+  dashLengthMultiplier: 6
+  dashWidthMultiplier: 4
+  dashDuration: 0.2

@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerMotor : MonoBehaviour
@@ -17,6 +19,19 @@ public class PlayerMotor : MonoBehaviour
     private const float CrouchingCameraHeight = 0.1f;
     private Transform cameraTransform;
     private PlayerAudioController playerAudio;
+    private bool isDashing;
+
+    private void OnEnable()
+    {
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+    }
+
+    private void OnDisable()
+    {
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
 
     private void Start()
     {
@@ -27,6 +42,9 @@ public class PlayerMotor : MonoBehaviour
 
     public void ProcessMove(Vector2 input, bool sprinting, bool crouching)
     {
+        if (isDashing)
+            return;
+
         grounded = controller.isGrounded;
         UpdateCrouch(crouching);
 
@@ -72,10 +90,171 @@ public class PlayerMotor : MonoBehaviour
 
     public void Jump()
     {
-        if (controller.isGrounded && controller.height >= StandingHeight)
+        if (!isDashing && controller.isGrounded && controller.height >= StandingHeight)
         {
             playerVelocity.y = Mathf.Sqrt(jumpHeight * -3.0f * gravity);
             playerAudio?.PlayJump();
+        }
+    }
+
+    public bool TryKillDash(
+        float damage,
+        float lengthMultiplier,
+        float widthMultiplier,
+        float duration)
+    {
+        if (isDashing || controller == null || lengthMultiplier <= 0f ||
+            widthMultiplier <= 0f || duration <= 0f)
+        {
+            return false;
+        }
+
+        StartCoroutine(KillDash(damage, lengthMultiplier, widthMultiplier, duration));
+        return true;
+    }
+
+    private IEnumerator KillDash(
+        float damage,
+        float lengthMultiplier,
+        float widthMultiplier,
+        float duration)
+    {
+        isDashing = true;
+        Vector3 dashDirection = transform.forward;
+        dashDirection.y = 0f;
+        dashDirection.Normalize();
+
+        if (dashDirection.sqrMagnitude < 0.001f)
+        {
+            isDashing = false;
+            yield break;
+        }
+
+        float bodyWidth = controller.radius * 2f;
+        float dashDistance = bodyWidth * lengthMultiplier;
+        float damageRadius = bodyWidth * widthMultiplier * 0.5f;
+        HashSet<EnemyHealth> damagedEnemies = new HashSet<EnemyHealth>();
+        List<CollisionIgnoreState> ignoredEnemyCollisions = IgnoreEnemyCollisions();
+        float elapsed = 0f;
+
+        try
+        {
+            while (elapsed < duration)
+            {
+                float frameDuration = Mathf.Min(Time.deltaTime, duration - elapsed);
+                float distanceThisFrame = dashDistance * frameDuration / duration;
+                int stepCount = Mathf.Max(1, Mathf.CeilToInt(distanceThisFrame / 0.2f));
+                float stepDuration = frameDuration / stepCount;
+                float stepDistance = distanceThisFrame / stepCount;
+
+                for (int step = 0; step < stepCount; step++)
+                {
+                    Vector3 previousPosition = transform.position;
+                    if (controller.isGrounded && playerVelocity.y < 0f)
+                        playerVelocity.y = -2f;
+                    else
+                        playerVelocity.y += gravity * stepDuration;
+
+                    CollisionFlags collisionFlags = controller.Move(
+                        dashDirection * stepDistance +
+                        Vector3.up * playerVelocity.y * stepDuration);
+                    Vector3 currentPosition = transform.position;
+
+                    DamageEnemiesAlongDash(
+                        previousPosition,
+                        currentPosition,
+                        damageRadius,
+                        damage,
+                        damagedEnemies);
+
+                    float movedDistance = Vector3.Dot(currentPosition - previousPosition, dashDirection);
+                    if ((collisionFlags & CollisionFlags.Sides) != 0 &&
+                        movedDistance < stepDistance - 0.01f)
+                    {
+                        yield break;
+                    }
+                }
+
+                elapsed += frameDuration;
+                yield return null;
+            }
+        }
+        finally
+        {
+            RestoreEnemyCollisions(ignoredEnemyCollisions);
+            isDashing = false;
+        }
+    }
+
+    private List<CollisionIgnoreState> IgnoreEnemyCollisions()
+    {
+        List<CollisionIgnoreState> ignoredCollisions = new List<CollisionIgnoreState>();
+        EnemyHealth[] enemies = FindObjectsByType<EnemyHealth>();
+
+        foreach (EnemyHealth enemy in enemies)
+        {
+            if (enemy == null)
+                continue;
+
+            Collider[] enemyColliders = enemy.GetComponentsInChildren<Collider>();
+            foreach (Collider enemyCollider in enemyColliders)
+            {
+                if (enemyCollider == null || !enemyCollider.enabled ||
+                    !enemyCollider.gameObject.activeInHierarchy)
+                {
+                    continue;
+                }
+
+                bool wasIgnored = Physics.GetIgnoreCollision(controller, enemyCollider);
+                ignoredCollisions.Add(new CollisionIgnoreState(enemyCollider, wasIgnored));
+                if (!wasIgnored)
+                    Physics.IgnoreCollision(controller, enemyCollider, true);
+            }
+        }
+
+        return ignoredCollisions;
+    }
+
+    private void RestoreEnemyCollisions(List<CollisionIgnoreState> ignoredCollisions)
+    {
+        foreach (CollisionIgnoreState state in ignoredCollisions)
+        {
+            if (state.Collider != null)
+                Physics.IgnoreCollision(controller, state.Collider, state.WasIgnored);
+        }
+    }
+
+    private static void DamageEnemiesAlongDash(
+        Vector3 start,
+        Vector3 end,
+        float radius,
+        float damage,
+        HashSet<EnemyHealth> damagedEnemies)
+    {
+        Collider[] overlappingColliders = Physics.OverlapCapsule(
+            start,
+            end,
+            radius,
+            Physics.DefaultRaycastLayers,
+            QueryTriggerInteraction.Ignore);
+
+        foreach (Collider overlappingCollider in overlappingColliders)
+        {
+            EnemyHealth enemy = overlappingCollider.GetComponentInParent<EnemyHealth>();
+            if (enemy != null && damagedEnemies.Add(enemy))
+                enemy.TakeDamage(damage);
+        }
+    }
+
+    private readonly struct CollisionIgnoreState
+    {
+        public readonly Collider Collider;
+        public readonly bool WasIgnored;
+
+        public CollisionIgnoreState(Collider collider, bool wasIgnored)
+        {
+            Collider = collider;
+            WasIgnored = wasIgnored;
         }
     }
 

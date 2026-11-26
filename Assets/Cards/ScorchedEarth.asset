@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 20b1990b582a44d196ba3aabda5def8f, type: 3}
+  m_Name: ScorchedEarth
+  m_EditorClassIdentifier: Assembly-CSharp::ComboDefinition
+  id: scorched_earth
+  displayName: SCORCHED EARTH
+  description: Dash a long, wide path and devastate every enemy caught in it.
+  requiredCards:
+  - {fileID: 11400000, guid: 8b4e1f6a3d9c4270a5e8b2f4c6d10395, type: 2}
+  - {fileID: 11400000, guid: c34b8e0f6a1d4b8c9e2f5a7d0c316294, type: 2}
+  - {fileID: 11400000, guid: b23a7d9e5f6c4a80a1b2c3d4e5f60718, type: 2}
+  - {fileID: 11400000, guid: a12f6c8d4e5b4397b0d1e2f6a8c30451, type: 2}
+  effectType: 0
+  damage: 150
+  dashLengthMultiplier: 24
+  dashWidthMultiplier: 12
+  dashDuration: 0.65

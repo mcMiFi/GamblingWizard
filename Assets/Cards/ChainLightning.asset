@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1c79b33a5c5845e7a54c1428667060d1, type: 3}
+  m_Name: ChainLightning
+  m_EditorClassIdentifier: Assembly-CSharp::CardDefinition
+  id: chain_lightning
+  displayName: CHAIN LIGHTNING
+  description: Strike an enemy and arc to up to four nearby enemies.
+  spellType: 2
+  category: 0
+  color: {r: 0.2, g: 0.78, b: 1, a: 1}
+  damage: 25
+  healingAmount: 15
+  projectileSpeed: 18
+  projectileRadius: 0.2
+  projectileLifetime: 5
+  maxChainTargets: 4
+  chainRange: 4
+  chainDelay: 0.2
+  chainVfxDuration: 0.3
+  dashLengthMultiplier: 6
+  dashWidthMultiplier: 4
+  dashDuration: 0.2

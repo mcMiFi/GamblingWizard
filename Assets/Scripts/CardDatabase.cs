@@ -5,6 +5,8 @@ using UnityEngine;
 public sealed class CardDatabase : ScriptableObject
 {
     [SerializeField] private List<CardDefinition> cards = new List<CardDefinition>();
+    [SerializeField] private List<ComboDefinition> combos = new List<ComboDefinition>();
 
     public IReadOnlyList<CardDefinition> Cards => cards;
+    public IReadOnlyList<ComboDefinition> Combos => combos;
 }

@@ -63,9 +63,12 @@ public sealed class CardHandController : MonoBehaviour
     public int RemainingCards => deck == null ? 0 : deck.RemainingCount;
     public int MaxRightHandSize => maxRightHandSize;
     public int DeckSize => deckSize;
+    public CardDatabase Database => cardDatabase;
 
     public event Action<CardDefinition> CardDrafted;
     public event Action<CardDefinition> CardUtilized;
+    public event Action<IReadOnlyList<CardDefinition>> CardsUtilized;
+    public event Action<CardDefinition> CardDiscarded;
 
     private void Awake()
     {
@@ -79,14 +82,20 @@ public sealed class CardHandController : MonoBehaviour
     {
         Mouse mouse = Mouse.current;
         if (mouse != null && mouse.leftButton.wasPressedThisFrame)
-            UtilizeCard();
+            UtilizeHand();
 
         if (mouse != null && mouse.rightButton.wasPressedThisFrame)
             DraftCard();
 
         Keyboard keyboard = Keyboard.current;
-        if (keyboard != null && keyboard.rKey.wasPressedThisFrame)
-            RefillDeck();
+        if (keyboard != null)
+        {
+            if (keyboard.qKey.wasPressedThisFrame)
+                DiscardLastCard();
+
+            if (keyboard.rKey.wasPressedThisFrame)
+                RefillDeck();
+        }
     }
 
     public bool DraftCard()
@@ -118,19 +127,33 @@ public sealed class CardHandController : MonoBehaviour
         return true;
     }
 
-    public int UtilizeAllCards()
+    public bool UtilizeHand()
     {
         if (rightHand.Count == 0)
-            return 0;
+            return false;
 
-        int utilizedCount = 0;
-        while (rightHand.Count > 0)
-        {
-            UtilizeCard();
-            utilizedCount++;
-        }
+        CardDefinition[] cards = rightHand.ToArray();
+        rightHand.Clear();
+        CardsUtilized?.Invoke(cards);
+        return true;
+    }
 
-        return utilizedCount;
+    public bool DiscardLastCard()
+    {
+        if (rightHand.Count == 0)
+            return false;
+
+        int lastIndex = rightHand.Count - 1;
+        CardDefinition card = rightHand[lastIndex];
+        rightHand.RemoveAt(lastIndex);
+        CardDiscarded?.Invoke(card);
+        return true;
+    }
+
+    public int UtilizeAllCards()
+    {
+        int utilizedCount = rightHand.Count;
+        return UtilizeHand() ? utilizedCount : 0;
     }
 
     public void ResetDeck()
@@ -229,10 +252,25 @@ public sealed class CardHandController : MonoBehaviour
             labelStyle);
         GUI.Label(
             new Rect(cardRect.x + 18f * scale, cardRect.yMax - 38f * scale, cardRect.width - 36f * scale, 24f * scale),
-            $"{card.Damage:0} DAMAGE",
+            GetCardEffectLabel(card),
             smallLabelStyle);
 
         GUI.color = previousColor;
+    }
+
+    private static string GetCardEffectLabel(CardDefinition card)
+    {
+        switch (card.SpellType)
+        {
+            case CardSpellType.Regeneration:
+                return $"HEAL {card.HealingAmount:0} HP";
+            case CardSpellType.ChainLightning:
+                return $"{card.Damage:0} DMG + {card.MaxChainTargets} JUMPS";
+            case CardSpellType.KillDash:
+                return $"{card.Damage:0} DMG / DASH";
+            default:
+                return $"{card.Damage:0} DAMAGE";
+        }
     }
 
     private void EnsureStyles(float scale)
